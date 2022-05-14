@@ -1,92 +1,5 @@
-use std::env;
-use std::path;
-use ggez::conf;
-use ggez::timer;
-
-use ggez::mint::{Point2, Vector2};
-use ggez::{Context, ContextBuilder, GameResult, GameError};
-use ggez::graphics::{self, Color};
-use ggez::event::{self, EventHandler, KeyCode, KeyMods};
-
-use oorandom::Rand32;
-
-const PLAYER_MOVE_RATE: f32 = 1.0;
-
-struct Assets {
-    player_image: graphics::Image,
-}
-
-impl Assets {
-    fn new(ctx: &mut Context) -> GameResult<Assets> {
-        let player_image = graphics::Image::new(ctx, "/player.png")?;
-
-        Ok(Assets {
-            player_image,
-        })
-    }
-
-    fn image(&mut self, entity: &Entity) -> &mut graphics::Image {
-        match entity.tag {
-            EntityType::Player => &mut self.player_image,
-        }
-    }
-}
-
-enum EntityType {
-    Player,
-}
-
-enum Direction {
-    Left,
-    Right,
-}
-
-struct Entity {
-    tag: EntityType,
-    pos: (i16, i16),
-    facing: Direction,
-    falling: bool,
-    health: i8,
-    damage: i8,
-    knockback: i8,
-}
-
-fn pos_to_p2(coords: (i16, i16)) -> Point2<f32> {
-    Point2 {x: coords.0 as f32, y: coords.1 as f32}
-}
-
-fn p2_to_pos(p2: Point2<f32>) -> (i16, i16) {
-    (p2.x as i16, p2.y as i16)
-}
-
-fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coords: (i16, i16)) -> GameResult {
-    let pos = pos_to_p2(coords);
-
-    let image = assets.image(entity);
-    let drawparams = graphics::DrawParam::new().dest(pos);
-
-    graphics::draw(ctx, image, drawparams)
-}
-
-fn handle_player_input(entity: &mut Entity, input: &InputState) {
-    entity.pos.0 += (PLAYER_MOVE_RATE * input.input_x) as i16
-}
-
-struct InputState {
-    input_x: f32,
-    jump: bool,
-    attack: bool,
-}
-
-impl Default for InputState {
-    fn default() -> Self {
-        InputState {
-            input_x: 0.0,
-            jump: false,
-            attack: false,
-        }
-    }
-}
+mod entity;
+use entity::*;
 
 struct MainState {
     player: Entity,
@@ -100,12 +13,13 @@ impl MainState {
         // Load/create resources such as images here.
         let player = Entity {
                 tag: EntityType::Player,
-                pos: (0, 0),
+                pos: (0, 224),
                 facing: Direction::Left,
                 falling: false,
                 health: 4,
                 damage: 1,
                 knockback: 1,
+                jump: 0,
             };
 
         // Seed the RNG
@@ -153,10 +67,36 @@ impl EventHandler<GameError> for MainState {
         Ok(())
     }
 
-    fn key_down_event(&mut self, ctx: &mut Context, keycode: KeyCode, _keymods: KeyMods, _repeat: bool) {
+    fn key_down_event(&mut self, _ctx: &mut Context, keycode: KeyCode, keymods: KeyMods, _repeat: bool) {
         match keycode {
-            KeyCode::Left => self.input.input_x -= 1.0,
-            KeyCode::Right => self.input.input_x += 1.0,
+            KeyCode::Left => {
+                if keymods.contains(KeyMods::SHIFT) {
+                    self.input.x = -2.5;
+                } else {
+                    self.input.x = -1.0;
+                }
+
+                self.player.facing = Direction::Left;
+            }
+
+            KeyCode::Right => {
+                if keymods.contains(KeyMods::SHIFT) {
+                    self.input.x = 2.5;
+                } else {
+                    self.input.x = 1.0;
+                }
+                
+                self.player.facing = Direction::Right;
+            }
+
+            KeyCode::LShift => {
+                if self.input.x == 1.0 {
+                    self.input.x = 2.5;
+                } else if self.input.x == -1.0 {
+                    self.input.x = -2.5
+                }
+            }
+
             KeyCode::Z => self.input.jump = true,
             KeyCode::X => self.input.attack = true,
             _ => (),
@@ -165,7 +105,7 @@ impl EventHandler<GameError> for MainState {
 
     fn key_up_event(&mut self, _ctx: &mut Context, _keycode: KeyCode, _keymods: KeyMods) {
         match _keycode {
-            KeyCode::Left | KeyCode::Right => self.input.input_x = 0.0,
+            KeyCode::Left | KeyCode::Right => self.input.x = 0.0,
             KeyCode::Z => self.input.jump = false,
             KeyCode::X => self.input.attack = false,
             _ => (),
