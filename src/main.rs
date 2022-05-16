@@ -13,13 +13,15 @@ impl MainState {
         // Load/create resources such as images here.
         let player = Entity {
                 tag: EntityType::Player,
-                pos: (0, 224),
+                pos: (0, GROUND as i16),
                 facing: Direction::Left,
+                frame: Frame::Stand,
                 falling: false,
+                jump: 0.0,
                 health: 4,
                 damage: 1,
                 knockback: 1,
-                jump: 0,
+                attack_cooldown: 1,
             };
 
         // Seed the RNG
@@ -46,7 +48,11 @@ impl EventHandler<GameError> for MainState {
         const DESIRED_FPS: u32 = 60;
         // Update code here...
         while timer::check_update_time(_ctx, DESIRED_FPS) {
-            handle_player_input(&mut self.player, &self.input)
+            if self.player.falling {
+                self.player.jump += PLAYER_JUMP_TIME;
+            }
+
+            handle_player_input(&mut self.player, &self.input);
         }
 
         Ok(())
@@ -97,7 +103,12 @@ impl EventHandler<GameError> for MainState {
                 }
             }
 
-            KeyCode::Z => self.input.jump = true,
+            KeyCode::Z => {
+                if ! self.player.falling {
+                    self.input.jump = true;
+                }
+            }
+
             KeyCode::X => self.input.attack = true,
             _ => (),
         }

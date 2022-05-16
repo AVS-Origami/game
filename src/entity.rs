@@ -11,30 +11,60 @@ pub use ggez::event::{self, EventHandler, KeyCode, KeyMods};
 pub use oorandom::Rand32;
 
 const PLAYER_MOVE_RATE: f32 = 2.0;
-const PLAYER_JUMP: [i16; 17] = [-4, -4, -3, -3, -2, -2, -1, -1, 0, 1, 1, 2, 2, 3, 3, 4, 4];
+pub const PLAYER_ANIM_RATE: i32 = 3;
+pub const PLAYER_JUMP_VELOCITY: f32 = 23.7;
+pub const PLAYER_JUMP_TIME: f32 = 0.3;
+pub const GROUND: f32 = 208.0;
 
 pub struct Assets {
     pub player: graphics::Image,
     pub player2: graphics::Image,
+    pub player3: graphics::Image,
+    pub player4: graphics::Image,
+    pub player5: graphics::Image,
+    pub player6: graphics::Image,
 }
 
 impl Assets {
     pub fn new(ctx: &mut Context) -> GameResult<Assets> {
         let player = graphics::Image::new(ctx, "/player.png")?;
         let player2 = graphics::Image::new(ctx, "/player2.png")?;
+        let player3 = graphics::Image::new(ctx, "/player3.png")?;
+        let player4 = graphics::Image::new(ctx, "/player4.png")?;
+        let player5 = graphics::Image::new(ctx, "/player5.png")?;
+        let player6 = graphics::Image::new(ctx, "/player6.png")?;
 
-        Ok(Assets {
-            player,
-            player2,
-        })
+        Ok (
+            Assets {
+                player,
+                player2,
+                player3,
+                player4,
+                player5,
+                player6,
+            }
+        )
     }
 
     fn image(&mut self, entity: &Entity) -> &mut graphics::Image {
         match entity.tag {
             EntityType::Player => {
                 match entity.facing {
-                    Direction::Left => &mut self.player,
-                    Direction::Right => &mut self.player2,
+                    Direction::Left => {
+                        match entity.frame {
+                            Frame::Stand => &mut self.player,
+                            Frame::Walk1 => &mut self.player3,
+                            Frame::Walk2 => &mut self.player5,
+                        }
+                    }
+
+                    Direction::Right => {
+                        match entity.frame {
+                            Frame::Stand => &mut self.player2,
+                            Frame::Walk1 => &mut self.player4,
+                            Frame::Walk2 => &mut self.player6,
+                        }
+                    }
                 }
             }
         }
@@ -50,23 +80,27 @@ pub enum Direction {
     Right,
 }
 
+pub enum Frame {
+    Stand,
+    Walk1,
+    Walk2,
+}
+
 pub struct Entity {
     pub tag: EntityType,
     pub pos: (i16, i16),
     pub facing: Direction,
+    pub frame: Frame,
     pub falling: bool,
+    pub jump: f32,
     pub health: i8,
     pub damage: i8,
     pub knockback: i8,
-    pub jump: usize,
+    pub attack_cooldown: i8
 }
 
 pub fn pos_to_p2(coords: (i16, i16)) -> Point2<f32> {
     Point2 {x: coords.0 as f32, y: coords.1 as f32}
-}
-
-pub fn p2_to_pos(p2: Point2<f32>) -> (i16, i16) {
-    (p2.x as i16, p2.y as i16)
 }
 
 pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coords: (i16, i16)) -> GameResult {
@@ -81,18 +115,38 @@ pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coor
 pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
     entity.pos.0 += (PLAYER_MOVE_RATE * input.x) as i16;
 
-    if input.jump {
-        if entity.jump > PLAYER_JUMP.len() - 1 {
-            entity.jump = 0;
+    if input.x != 0.0 {
+        match entity.frame {
+            Frame::Stand => entity.frame = Frame::Walk1,
+            Frame::Walk1 => entity.frame = Frame::Walk2,
+            Frame::Walk2 => entity.frame = Frame::Stand,
         }
-        entity.pos.1 += PLAYER_JUMP[entity.jump];
-        entity.jump += 1;
-    } else if ! input.jump && entity.jump != 0 {
-        if entity.jump > PLAYER_JUMP.len() - 1 {
-            entity.jump = 0;
-        } else {
-            entity.pos.1 += PLAYER_JUMP[entity.jump];
-            entity.jump += 1;
+    } else if input.x == 0.0 {
+        entity.frame = Frame::Stand;
+    }
+
+    if input.jump {
+        entity.falling = true;
+        entity.pos = (entity.pos.0, ((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) as i16);
+
+        if entity.pos.1 > GROUND as i16 {
+
+            entity.pos = (entity.pos.0, GROUND as i16);
+            entity.jump = 0.0;
+
+        }
+
+    } else if ! input.jump {
+
+        if entity.pos.1 >= GROUND as i16 {
+
+            entity.falling = false;
+            entity.jump = 0.0
+
+        } else if entity.pos.1 < GROUND as i16 {
+
+            entity.pos = (entity.pos.0, ((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) as i16);
+
         }
     }
 }
