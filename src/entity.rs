@@ -13,7 +13,7 @@ pub use oorandom::Rand32;
 const PLAYER_MOVE_RATE: f32 = 2.0;
 pub const PLAYER_ANIM_RATE: i32 = 3;
 pub const PLAYER_JUMP_VELOCITY: f32 = 23.7;
-pub const PLAYER_JUMP_TIME: f32 = 0.3;
+pub const PLAYER_JUMP_TIME: f32 = 0.25; // default 0.3
 pub const GROUND: f32 = 208.0;
 
 pub struct Assets {
@@ -160,14 +160,27 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
 
         if entity.pos.1 >= GROUND as i16 {
 
-            entity.falling = false;
-            entity.jump = 0.0
+                entity.falling = false;
+                entity.jump = 0.0;
+                entity.pos = (entity.pos.0, GROUND as i16);
 
         } else if entity.pos.1 < GROUND as i16 {
 
             entity.pos = (entity.pos.0, ((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) as i16);
 
+            if entity.pos.1 >= GROUND as i16 {
+
+                entity.falling = false;
+                entity.jump = 0.0;
+                entity.pos = (entity.pos.0, GROUND as i16);
+
+            }
+
         }
+    }
+
+    if entity.falling {
+        entity.frame = Frame::Walk2;
     }
 }
 
