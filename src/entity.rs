@@ -23,6 +23,10 @@ pub struct Assets {
     pub player4: graphics::Image,
     pub player5: graphics::Image,
     pub player6: graphics::Image,
+    pub player7: graphics::Image,
+    pub player8: graphics::Image,
+    pub player9: graphics::Image,
+    pub player0: graphics::Image,
 }
 
 impl Assets {
@@ -33,6 +37,10 @@ impl Assets {
         let player4 = graphics::Image::new(ctx, "/player4.png")?;
         let player5 = graphics::Image::new(ctx, "/player5.png")?;
         let player6 = graphics::Image::new(ctx, "/player6.png")?;
+        let player7 = graphics::Image::new(ctx, "/player7.png")?;
+        let player8 = graphics::Image::new(ctx, "/player8.png")?;
+        let player9 = graphics::Image::new(ctx, "/player9.png")?;
+        let player0 = graphics::Image::new(ctx, "/player0.png")?;
 
         Ok (
             Assets {
@@ -42,6 +50,10 @@ impl Assets {
                 player4,
                 player5,
                 player6,
+                player7,
+                player8,
+                player9,
+                player0,
             }
         )
     }
@@ -55,6 +67,8 @@ impl Assets {
                             Frame::Stand => &mut self.player,
                             Frame::Walk1 => &mut self.player3,
                             Frame::Walk2 => &mut self.player5,
+                            Frame::Walk3 => &mut self.player7,
+                            Frame::Walk4 => &mut self.player9,
                         }
                     }
 
@@ -63,6 +77,8 @@ impl Assets {
                             Frame::Stand => &mut self.player2,
                             Frame::Walk1 => &mut self.player4,
                             Frame::Walk2 => &mut self.player6,
+                            Frame::Walk3 => &mut self.player8,
+                            Frame::Walk4 => &mut self.player0,
                         }
                     }
                 }
@@ -84,6 +100,8 @@ pub enum Frame {
     Stand,
     Walk1,
     Walk2,
+    Walk3,
+    Walk4,
 }
 
 pub struct Entity {
@@ -119,7 +137,9 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
         match entity.frame {
             Frame::Stand => entity.frame = Frame::Walk1,
             Frame::Walk1 => entity.frame = Frame::Walk2,
-            Frame::Walk2 => entity.frame = Frame::Stand,
+            Frame::Walk2 => entity.frame = Frame::Walk3,
+            Frame::Walk3 => entity.frame = Frame::Walk4,
+            Frame::Walk4 => entity.frame = Frame::Stand,
         }
     } else if input.x == 0.0 {
         entity.frame = Frame::Stand;
