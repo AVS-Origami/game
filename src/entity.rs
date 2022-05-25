@@ -1,20 +1,23 @@
-pub use std::env;
-pub use std::path;
-pub use ggez::conf;
-pub use ggez::timer;
+/// *********************************************************************
+/// Use necessary crates.
+/// *********************************************************************
 
-pub use ggez::mint::Point2;
-pub use ggez::{Context, ContextBuilder, GameResult, GameError};
-pub use ggez::graphics::{self, Color};
-pub use ggez::event::{self, EventHandler, KeyCode, KeyMods};
+use ggez::graphics;
 
-pub use oorandom::Rand32;
+use ggez::mint::Point2;
+use ggez::{Context, GameResult};
 
 const PLAYER_MOVE_RATE: f32 = 2.0;
-pub const PLAYER_ANIM_RATE: i32 = 3;
-pub const PLAYER_JUMP_VELOCITY: f32 = 23.7;
-pub const PLAYER_JUMP_TIME: f32 = 0.25; // default 0.3
-pub const GROUND: f32 = 208.0;
+const PLAYER_JUMP_VELOCITY: f32 = 23.7;
+
+pub const SCREEN_WIDTH: f32 = 320.0;
+pub const SCREEN_HEIGHT: f32 = 240.0;
+pub const PLAYER_JUMP_TIME: f32 = 0.25;
+pub const GROUND: f32 = SCREEN_HEIGHT - 24.0;
+
+/// *********************************************************************
+/// Create a struct containing all the assets used by the game.
+/// *********************************************************************
 
 pub struct Assets {
     pub player: graphics::Image,
@@ -27,6 +30,9 @@ pub struct Assets {
     pub player8: graphics::Image,
     pub player9: graphics::Image,
     pub player0: graphics::Image,
+    pub ground: graphics::Image,
+    pub grass: graphics::Image,
+    pub moss: graphics::Image,
 }
 
 impl Assets {
@@ -41,6 +47,9 @@ impl Assets {
         let player8 = graphics::Image::new(ctx, "/player8.png")?;
         let player9 = graphics::Image::new(ctx, "/player9.png")?;
         let player0 = graphics::Image::new(ctx, "/player0.png")?;
+        let ground = graphics::Image::new(ctx, "/ground.png")?;
+        let grass = graphics::Image::new(ctx, "/grass.png")?;
+        let moss = graphics::Image::new(ctx, "/moss.png")?;
 
         Ok (
             Assets {
@@ -54,6 +63,9 @@ impl Assets {
                 player8,
                 player9,
                 player0,
+                ground,
+                grass,
+                moss,
             }
         )
     }
@@ -87,6 +99,10 @@ impl Assets {
     }
 }
 
+/// *********************************************************************
+/// Create an enumeration of all the different entity types.
+/// *********************************************************************
+
 pub enum EntityType {
     Player,
 }
@@ -96,6 +112,10 @@ pub enum Direction {
     Right,
 }
 
+/// *********************************************************************
+/// Create an enumeration of all entity animation frames.
+/// *********************************************************************
+
 pub enum Frame {
     Stand,
     Walk1,
@@ -103,6 +123,10 @@ pub enum Frame {
     Walk3,
     Walk4,
 }
+
+/// *********************************************************************
+/// Define a struct containing the properties of an entity.
+/// *********************************************************************
 
 pub struct Entity {
     pub tag: EntityType,
@@ -117,9 +141,9 @@ pub struct Entity {
     pub attack_cooldown: i8
 }
 
-pub fn pos_to_p2(coords: (i16, i16)) -> Point2<f32> {
-    Point2 {x: coords.0 as f32, y: coords.1 as f32}
-}
+/// *********************************************************************
+/// Create a function to draw entities.
+/// *********************************************************************
 
 pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coords: (i16, i16)) -> GameResult {
     let pos = pos_to_p2(coords);
@@ -130,8 +154,20 @@ pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coor
     graphics::draw(ctx, image, drawparams)
 }
 
+/// *********************************************************************
+/// Create a function to handle player input and update the player's
+/// properties accordingly.
+/// *********************************************************************
+
 pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
     entity.pos.0 += (PLAYER_MOVE_RATE * input.x) as i16;
+
+    // Make sure the player can't go off the edge of the screen
+    if entity.pos.0 < 0 {
+        entity.pos = (0, entity.pos.1);
+    } else if entity.pos.0 > SCREEN_WIDTH as i16 - 16 {
+        entity.pos = (SCREEN_WIDTH as i16 - 16, entity.pos.1);
+    }
 
     if input.x != 0.0 {
         match entity.frame {
@@ -184,6 +220,10 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
     }
 }
 
+/// *********************************************************************
+/// Create a struct and impl to store player input.
+/// *********************************************************************
+
 pub struct InputState {
     pub x: f32,
     pub jump: bool,
@@ -198,4 +238,18 @@ impl Default for InputState {
             attack: false,
         }
     }
+}
+
+
+
+/// *********************************************************************
+/// Helper functions.
+/// *********************************************************************
+
+/// *********************************************************************
+/// Convert entity cordinates to a Point2 type.
+/// *********************************************************************
+
+fn pos_to_p2(coords: (i16, i16)) -> Point2<f32> {
+    Point2 {x: coords.0 as f32, y: coords.1 as f32}
 }

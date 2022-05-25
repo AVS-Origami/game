@@ -1,3 +1,23 @@
+/// *********************************************************************
+/// Use necessary crates.
+/// *********************************************************************
+
+use std::env;
+use std::path;
+use ggez::conf;
+use ggez::timer;
+
+use ggez::{Context, ContextBuilder, GameResult, GameError};
+use ggez::graphics::{self, Color};
+use ggez::event::{self, EventHandler, KeyCode, KeyMods};
+use ggez::mint::Point2;
+
+use oorandom::Rand32;
+
+/// *********************************************************************
+/// Import modules.
+/// *********************************************************************
+
 mod entity;
 use entity::*;
 
@@ -61,8 +81,11 @@ impl EventHandler<GameError> for MainState {
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::WHITE);
 
-        // Draw the player, as a test
+        // Draw the player
         draw_entity(&mut self.assets, ctx, &self.player, self.player.pos)?;
+
+        // Draw the ground
+        draw_ground(&mut self.assets, ctx)?;
 
         // Draw code here...
 
@@ -137,7 +160,7 @@ fn main() -> GameResult {
     // Make a Context.
     let (mut ctx, event_loop) = ContextBuilder::new("game", "AVS Origami")
         .window_setup(conf::WindowSetup::default().title("game"))
-        .window_mode(conf::WindowMode::default().dimensions(320.0, 240.0))
+        .window_mode(conf::WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
         .add_resource_path(resource_dir)
         .build()
         .expect("aieee, could not create ggez context!");
@@ -150,3 +173,53 @@ fn main() -> GameResult {
     // Run!
     event::run(ctx, event_loop, game)
 }
+
+fn draw_ground(assets: &mut Assets, ctx: &mut Context) -> GameResult {
+    let mut pos = Point2 {x: 0.0, y: GROUND + 16.0};
+    let image = &mut assets.moss;
+
+    Ok (
+        for _ in 0..(SCREEN_WIDTH / 8.0) as i32 {
+            let drawparams = graphics::DrawParam::new().dest(pos);
+            graphics::draw(ctx, image, drawparams)?;
+            pos.x += 8.0;
+        }
+    )
+}
+
+/*
+fn draw_background(assets: &mut Assets, ctx: &mut Context, rng: &mut Rand32) -> GameResult {
+    let mut pos = Point2 {x: 0.0, y: 0.0};
+    let grass = &mut assets.grass;
+    let moss = &mut assets.moss;
+
+    Ok (
+        for _ in 0..(SCREEN_HEIGHT / 8.0) as i32 {
+            for _ in 0..(SCREEN_WIDTH / 8.0) as i32 {
+                let drawparams = graphics::DrawParam::new().dest(pos);
+                let rand = rng.rand_range(0..2);
+
+                let image = if rand == 0 {
+                    &mut *grass
+                } else {
+                    &mut *moss
+                };
+
+                graphics::draw(ctx, image, drawparams)?;
+                pos.x += 8.0;
+            }
+
+            pos.y += 8.0;
+        }
+    )
+}
+*/
+
+/*
+fn draw_background(assets: &mut Assets, ctx: &mut Context) -> GameResult {
+    let pos = Point2 {x: 0.0, y: 0.0};
+    let image = &mut assets.moss;
+    let drawparams = graphics::DrawParam::new().dest(pos);
+    graphics::draw(ctx, image, drawparams)
+}
+*/
