@@ -24,12 +24,15 @@ use entity::*;
 struct MainState {
     player: Entity,
     rng: Rand32,
+    monsters: Vec<Entity>,
+    spawn_cycle: f32,
+    ticks: f32,
     assets: Assets,
     input: InputState,
 }
 
 impl MainState {
-    pub fn new(_ctx: &mut Context) -> GameResult<MainState> {
+    pub fn new(ctx: &mut Context) -> GameResult<MainState> {
         // Load/create resources such as images here.
         let player = Entity {
                 tag: EntityType::Player,
@@ -40,8 +43,7 @@ impl MainState {
                 jump: 0.0,
                 health: 4,
                 damage: 1,
-                knockback: 1,
-                attack_cooldown: 1,
+                ticks: 0,
             };
 
         // Seed the RNG
@@ -49,13 +51,20 @@ impl MainState {
         getrandom::getrandom(&mut seed[..]).expect("aieee, could not seed rng!");
         let mut rng = Rand32::new(u64::from_ne_bytes(seed));
 
+        let monsters: Vec<Entity> = Vec::new();
+
         // Load assets
-        let assets = Assets::new(_ctx)?;
+        let assets = Assets::new(ctx)?;
+
+        let spawn_cycle = rng.rand_range(4..9) as f32;
 
         let s = MainState {
             player,
             rng,
             assets,
+            monsters,
+            spawn_cycle,
+            ticks: 0.0,
             input: InputState::default(),
         };
 
@@ -64,16 +73,25 @@ impl MainState {
 }
 
 impl EventHandler<GameError> for MainState {
-    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+    fn update(&mut self, ctx: &mut Context) -> GameResult {
         const DESIRED_FPS: u32 = 60;
         // Update code here...
-        while timer::check_update_time(_ctx, DESIRED_FPS) {
+        while timer::check_update_time(ctx, DESIRED_FPS) {
             if self.player.falling {
                 self.player.jump += PLAYER_JUMP_TIME;
             }
 
             handle_player_input(&mut self.player, &self.input);
         }
+
+        self.ticks += 1.0;
+        if (self.ticks / 60.0) == self.spawn_cycle {
+            spawn_monsters(&mut self.rng, &mut self.monsters);
+            self.spawn_cycle = self.rng.rand_range(4..9) as f32;
+            self.ticks = 0.0;
+        }
+
+        update_monsters(&mut self.monsters);
 
         Ok(())
     }
@@ -83,6 +101,9 @@ impl EventHandler<GameError> for MainState {
 
         // Draw the player
         draw_entity(&mut self.assets, ctx, &self.player, self.player.pos)?;
+
+        // Draw the monsters
+        draw_monsters(&mut self.monsters, &mut self.assets, ctx)?;
 
         // Draw the ground
         draw_ground(&mut self.assets, ctx)?;
@@ -186,40 +207,3 @@ fn draw_ground(assets: &mut Assets, ctx: &mut Context) -> GameResult {
         }
     )
 }
-
-/*
-fn draw_background(assets: &mut Assets, ctx: &mut Context, rng: &mut Rand32) -> GameResult {
-    let mut pos = Point2 {x: 0.0, y: 0.0};
-    let grass = &mut assets.grass;
-    let moss = &mut assets.moss;
-
-    Ok (
-        for _ in 0..(SCREEN_HEIGHT / 8.0) as i32 {
-            for _ in 0..(SCREEN_WIDTH / 8.0) as i32 {
-                let drawparams = graphics::DrawParam::new().dest(pos);
-                let rand = rng.rand_range(0..2);
-
-                let image = if rand == 0 {
-                    &mut *grass
-                } else {
-                    &mut *moss
-                };
-
-                graphics::draw(ctx, image, drawparams)?;
-                pos.x += 8.0;
-            }
-
-            pos.y += 8.0;
-        }
-    )
-}
-*/
-
-/*
-fn draw_background(assets: &mut Assets, ctx: &mut Context) -> GameResult {
-    let pos = Point2 {x: 0.0, y: 0.0};
-    let image = &mut assets.moss;
-    let drawparams = graphics::DrawParam::new().dest(pos);
-    graphics::draw(ctx, image, drawparams)
-}
-*/

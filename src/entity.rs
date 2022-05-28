@@ -7,8 +7,11 @@ use ggez::graphics;
 use ggez::mint::Point2;
 use ggez::{Context, GameResult};
 
+use oorandom::Rand32;
+
 const PLAYER_MOVE_RATE: f32 = 2.0;
 const PLAYER_JUMP_VELOCITY: f32 = 23.7;
+const MONSTER_MOVE_RATE: i8 = 2;
 
 pub const SCREEN_WIDTH: f32 = 320.0;
 pub const SCREEN_HEIGHT: f32 = 240.0;
@@ -30,6 +33,26 @@ pub struct Assets {
     pub player8: graphics::Image,
     pub player9: graphics::Image,
     pub player0: graphics::Image,
+    pub zombie: graphics::Image,
+    pub zombie2: graphics::Image,
+    pub zombie3: graphics::Image,
+    pub zombie4: graphics::Image,
+    pub zombie5: graphics::Image,
+    pub zombie6: graphics::Image,
+    pub zombie7: graphics::Image,
+    pub zombie8: graphics::Image,
+    pub zombie9: graphics::Image,
+    pub zombie0: graphics::Image,
+    pub skeleton: graphics::Image,
+    pub skeleton2: graphics::Image,
+    pub skeleton3: graphics::Image,
+    pub skeleton4: graphics::Image,
+    pub skeleton5: graphics::Image,
+    pub skeleton6: graphics::Image,
+    pub skeleton7: graphics::Image,
+    pub skeleton8: graphics::Image,
+    pub skeleton9: graphics::Image,
+    pub skeleton0: graphics::Image,
     pub ground: graphics::Image,
     pub grass: graphics::Image,
     pub moss: graphics::Image,
@@ -47,6 +70,26 @@ impl Assets {
         let player8 = graphics::Image::new(ctx, "/player8.png")?;
         let player9 = graphics::Image::new(ctx, "/player9.png")?;
         let player0 = graphics::Image::new(ctx, "/player0.png")?;
+        let zombie = graphics::Image::new(ctx, "/zombie.png")?;
+        let zombie2 = graphics::Image::new(ctx, "/zombie2.png")?;
+        let zombie3 = graphics::Image::new(ctx, "/zombie3.png")?;
+        let zombie4 = graphics::Image::new(ctx, "/zombie4.png")?;
+        let zombie5 = graphics::Image::new(ctx, "/zombie5.png")?;
+        let zombie6 = graphics::Image::new(ctx, "/zombie6.png")?;
+        let zombie7 = graphics::Image::new(ctx, "/zombie7.png")?;
+        let zombie8 = graphics::Image::new(ctx, "/zombie8.png")?;
+        let zombie9 = graphics::Image::new(ctx, "/zombie9.png")?;
+        let zombie0 = graphics::Image::new(ctx, "/zombie0.png")?;
+        let skeleton = graphics::Image::new(ctx, "/skeleton.png")?;
+        let skeleton2 = graphics::Image::new(ctx, "/skeleton2.png")?;
+        let skeleton3 = graphics::Image::new(ctx, "/skeleton3.png")?;
+        let skeleton4 = graphics::Image::new(ctx, "/skeleton4.png")?;
+        let skeleton5 = graphics::Image::new(ctx, "/skeleton5.png")?;
+        let skeleton6 = graphics::Image::new(ctx, "/skeleton6.png")?;
+        let skeleton7 = graphics::Image::new(ctx, "/skeleton7.png")?;
+        let skeleton8 = graphics::Image::new(ctx, "/skeleton8.png")?;
+        let skeleton9 = graphics::Image::new(ctx, "/skeleton9.png")?;
+        let skeleton0 = graphics::Image::new(ctx, "/skeleton0.png")?;
         let ground = graphics::Image::new(ctx, "/ground.png")?;
         let grass = graphics::Image::new(ctx, "/grass.png")?;
         let moss = graphics::Image::new(ctx, "/moss.png")?;
@@ -63,6 +106,26 @@ impl Assets {
                 player8,
                 player9,
                 player0,
+                zombie,
+                zombie2,
+                zombie3,
+                zombie4,
+                zombie5,
+                zombie6,
+                zombie7,
+                zombie8,
+                zombie9,
+                zombie0,
+                skeleton,
+                skeleton2,
+                skeleton3,
+                skeleton4,
+                skeleton5,
+                skeleton6,
+                skeleton7,
+                skeleton8,
+                skeleton9,
+                skeleton0,
                 ground,
                 grass,
                 moss,
@@ -95,6 +158,54 @@ impl Assets {
                     }
                 }
             }
+
+            EntityType::Zombie => {
+                match entity.facing {
+                    Direction::Left => {
+                        match entity.frame {
+                            Frame::Stand => &mut self.zombie,
+                            Frame::Walk1 => &mut self.zombie3,
+                            Frame::Walk2 => &mut self.zombie5,
+                            Frame::Walk3 => &mut self.zombie7,
+                            Frame::Walk4 => &mut self.zombie9,
+                        }
+                    }
+
+                    Direction::Right => {
+                        match entity.frame {
+                            Frame::Stand => &mut self.zombie2,
+                            Frame::Walk1 => &mut self.zombie4,
+                            Frame::Walk2 => &mut self.zombie6,
+                            Frame::Walk3 => &mut self.zombie8,
+                            Frame::Walk4 => &mut self.zombie0,
+                        }
+                    }
+                }
+            }
+
+            EntityType::Skeleton => {
+                match entity.facing {
+                    Direction::Left => {
+                        match entity.frame {
+                            Frame::Stand => &mut self.skeleton,
+                            Frame::Walk1 => &mut self.skeleton3,
+                            Frame::Walk2 => &mut self.skeleton5,
+                            Frame::Walk3 => &mut self.skeleton7,
+                            Frame::Walk4 => &mut self.skeleton9,
+                        }
+                    }
+
+                    Direction::Right => {
+                        match entity.frame {
+                            Frame::Stand => &mut self.skeleton2,
+                            Frame::Walk1 => &mut self.skeleton4,
+                            Frame::Walk2 => &mut self.skeleton6,
+                            Frame::Walk3 => &mut self.skeleton8,
+                            Frame::Walk4 => &mut self.skeleton0,
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -105,6 +216,8 @@ impl Assets {
 
 pub enum EntityType {
     Player,
+    Zombie,
+    Skeleton,
 }
 
 pub enum Direction {
@@ -137,8 +250,7 @@ pub struct Entity {
     pub jump: f32,
     pub health: i8,
     pub damage: i8,
-    pub knockback: i8,
-    pub attack_cooldown: i8
+    pub ticks: i8,
 }
 
 /// *********************************************************************
@@ -152,6 +264,19 @@ pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coor
     let drawparams = graphics::DrawParam::new().dest(pos);
 
     graphics::draw(ctx, image, drawparams)
+}
+
+/// *********************************************************************
+/// Create a function to advance entity animations.
+/// *********************************************************************
+fn advance_animation(entity: &mut Entity) {
+    match entity.frame {
+        Frame::Stand => entity.frame = Frame::Walk1,
+        Frame::Walk1 => entity.frame = Frame::Walk2,
+        Frame::Walk2 => entity.frame = Frame::Walk3,
+        Frame::Walk3 => entity.frame = Frame::Walk4,
+        Frame::Walk4 => entity.frame = Frame::Stand,
+    }
 }
 
 /// *********************************************************************
@@ -170,13 +295,7 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
     }
 
     if input.x != 0.0 {
-        match entity.frame {
-            Frame::Stand => entity.frame = Frame::Walk1,
-            Frame::Walk1 => entity.frame = Frame::Walk2,
-            Frame::Walk2 => entity.frame = Frame::Walk3,
-            Frame::Walk3 => entity.frame = Frame::Walk4,
-            Frame::Walk4 => entity.frame = Frame::Stand,
-        }
+        advance_animation(entity);
     } else if input.x == 0.0 {
         entity.frame = Frame::Stand;
     }
@@ -240,7 +359,92 @@ impl Default for InputState {
     }
 }
 
+/// *********************************************************************
+/// Create a function to spawn monsters.
+/// *********************************************************************
 
+pub fn spawn_monsters(rng: &mut Rand32, monster_list: &mut Vec<Entity>) {
+    for _ in 0..rng.rand_range(2..5) {
+        let tag_gen = rng.rand_range(0..2);
+        let tag = if tag_gen == 0 {
+            EntityType::Zombie
+        } else {
+            EntityType::Skeleton
+        };
+
+        let pos = (rng.rand_range(16..(SCREEN_WIDTH - 32.0) as u32) as i16, 8);
+
+        let facing_gen = rng.rand_range(0..2);
+        let facing = if facing_gen == 0 {
+            Direction::Left
+        } else {
+            Direction::Right
+        };
+
+        let monster = Entity {
+            tag,
+            pos,
+            facing,
+            frame: Frame::Walk2,
+            falling: true,
+            jump: 0.0,
+            health: 1,
+            damage: 1,
+            ticks: 0,
+        };
+
+        monster_list.push(monster);
+    }
+}
+
+/// *********************************************************************
+/// Create a function to draw monsters.
+/// *********************************************************************
+pub fn draw_monsters(monster_list: &mut Vec<Entity>, assets: &mut Assets, ctx: &mut Context) -> GameResult {
+    Ok (
+        for monster in monster_list {
+            draw_entity(assets, ctx, monster, monster.pos)?;
+        }
+    )
+}
+
+/// *********************************************************************
+/// Create a function to update monsters.
+/// *********************************************************************
+pub fn update_monsters(monster_list: &mut Vec<Entity>) {
+    for monster in monster_list {
+        if ! monster.falling {
+            monster.ticks += 1;
+        }
+        if monster.ticks == MONSTER_MOVE_RATE && ! monster.falling {
+            let direction = match monster.facing {
+                Direction::Left => -1,
+                Direction::Right => 1,
+            };
+
+            monster.pos = (monster.pos.0 + direction, monster.pos.1);
+            if monster.pos.0 < 0 {
+                monster.facing = Direction::Right;
+                monster.pos = (0, monster.pos.1);
+            } else if monster.pos.0 > (SCREEN_WIDTH - 16.0) as i16 {
+                monster.facing = Direction::Left;
+                monster.pos = ((SCREEN_WIDTH - 16.0) as i16, monster.pos.1);
+            }
+            advance_animation(monster);
+            monster.ticks = 0;
+        }
+
+        if monster.falling {
+            monster.pos = (monster.pos.0, ((1.09 * monster.jump.powf(2.0)) - 8.0) as i16);
+            monster.jump += 1.0;
+        }
+
+        if monster.pos.1 >= GROUND as i16 {
+            monster.falling = false;
+            monster.pos = (monster.pos.0, GROUND as i16);
+        }
+    }
+}
 
 /// *********************************************************************
 /// Helper functions.
