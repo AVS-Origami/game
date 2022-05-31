@@ -1,8 +1,7 @@
 /// *********************************************************************
 /// Use necessary crates.
 /// *********************************************************************
-
-use ggez::graphics;
+use ggez::graphics::{self, FilterMode};
 
 use ggez::mint::Point2;
 use ggez::{Context, GameResult};
@@ -60,39 +59,73 @@ pub struct Assets {
 
 impl Assets {
     pub fn new(ctx: &mut Context) -> GameResult<Assets> {
-        let player = graphics::Image::new(ctx, "/player.png")?;
-        let player2 = graphics::Image::new(ctx, "/player2.png")?;
-        let player3 = graphics::Image::new(ctx, "/player3.png")?;
-        let player4 = graphics::Image::new(ctx, "/player4.png")?;
-        let player5 = graphics::Image::new(ctx, "/player5.png")?;
-        let player6 = graphics::Image::new(ctx, "/player6.png")?;
-        let player7 = graphics::Image::new(ctx, "/player7.png")?;
-        let player8 = graphics::Image::new(ctx, "/player8.png")?;
-        let player9 = graphics::Image::new(ctx, "/player9.png")?;
-        let player0 = graphics::Image::new(ctx, "/player0.png")?;
-        let zombie = graphics::Image::new(ctx, "/zombie.png")?;
-        let zombie2 = graphics::Image::new(ctx, "/zombie2.png")?;
-        let zombie3 = graphics::Image::new(ctx, "/zombie3.png")?;
-        let zombie4 = graphics::Image::new(ctx, "/zombie4.png")?;
-        let zombie5 = graphics::Image::new(ctx, "/zombie5.png")?;
-        let zombie6 = graphics::Image::new(ctx, "/zombie6.png")?;
-        let zombie7 = graphics::Image::new(ctx, "/zombie7.png")?;
-        let zombie8 = graphics::Image::new(ctx, "/zombie8.png")?;
-        let zombie9 = graphics::Image::new(ctx, "/zombie9.png")?;
-        let zombie0 = graphics::Image::new(ctx, "/zombie0.png")?;
-        let skeleton = graphics::Image::new(ctx, "/skeleton.png")?;
-        let skeleton2 = graphics::Image::new(ctx, "/skeleton2.png")?;
-        let skeleton3 = graphics::Image::new(ctx, "/skeleton3.png")?;
-        let skeleton4 = graphics::Image::new(ctx, "/skeleton4.png")?;
-        let skeleton5 = graphics::Image::new(ctx, "/skeleton5.png")?;
-        let skeleton6 = graphics::Image::new(ctx, "/skeleton6.png")?;
-        let skeleton7 = graphics::Image::new(ctx, "/skeleton7.png")?;
-        let skeleton8 = graphics::Image::new(ctx, "/skeleton8.png")?;
-        let skeleton9 = graphics::Image::new(ctx, "/skeleton9.png")?;
-        let skeleton0 = graphics::Image::new(ctx, "/skeleton0.png")?;
-        let ground = graphics::Image::new(ctx, "/ground.png")?;
-        let grass = graphics::Image::new(ctx, "/grass.png")?;
-        let moss = graphics::Image::new(ctx, "/moss.png")?;
+        let mut player = graphics::Image::new(ctx, "/player.png")?;
+        let mut player2 = graphics::Image::new(ctx, "/player2.png")?;
+        let mut player3 = graphics::Image::new(ctx, "/player3.png")?;
+        let mut player4 = graphics::Image::new(ctx, "/player4.png")?;
+        let mut player5 = graphics::Image::new(ctx, "/player5.png")?;
+        let mut player6 = graphics::Image::new(ctx, "/player6.png")?;
+        let mut player7 = graphics::Image::new(ctx, "/player7.png")?;
+        let mut player8 = graphics::Image::new(ctx, "/player8.png")?;
+        let mut player9 = graphics::Image::new(ctx, "/player9.png")?;
+        let mut player0 = graphics::Image::new(ctx, "/player0.png")?;
+        let mut zombie = graphics::Image::new(ctx, "/zombie.png")?;
+        let mut zombie2 = graphics::Image::new(ctx, "/zombie2.png")?;
+        let mut zombie3 = graphics::Image::new(ctx, "/zombie3.png")?;
+        let mut zombie4 = graphics::Image::new(ctx, "/zombie4.png")?;
+        let mut zombie5 = graphics::Image::new(ctx, "/zombie5.png")?;
+        let mut zombie6 = graphics::Image::new(ctx, "/zombie6.png")?;
+        let mut zombie7 = graphics::Image::new(ctx, "/zombie7.png")?;
+        let mut zombie8 = graphics::Image::new(ctx, "/zombie8.png")?;
+        let mut zombie9 = graphics::Image::new(ctx, "/zombie9.png")?;
+        let mut zombie0 = graphics::Image::new(ctx, "/zombie0.png")?;
+        let mut skeleton = graphics::Image::new(ctx, "/skeleton.png")?;
+        let mut skeleton2 = graphics::Image::new(ctx, "/skeleton2.png")?;
+        let mut skeleton3 = graphics::Image::new(ctx, "/skeleton3.png")?;
+        let mut skeleton4 = graphics::Image::new(ctx, "/skeleton4.png")?;
+        let mut skeleton5 = graphics::Image::new(ctx, "/skeleton5.png")?;
+        let mut skeleton6 = graphics::Image::new(ctx, "/skeleton6.png")?;
+        let mut skeleton7 = graphics::Image::new(ctx, "/skeleton7.png")?;
+        let mut skeleton8 = graphics::Image::new(ctx, "/skeleton8.png")?;
+        let mut skeleton9 = graphics::Image::new(ctx, "/skeleton9.png")?;
+        let mut skeleton0 = graphics::Image::new(ctx, "/skeleton0.png")?;
+        let mut ground = graphics::Image::new(ctx, "/ground.png")?;
+        let mut grass = graphics::Image::new(ctx, "/grass.png")?;
+        let mut moss = graphics::Image::new(ctx, "/moss.png")?;
+
+        player.set_filter(FilterMode::Nearest);
+        player2.set_filter(FilterMode::Nearest);
+        player3.set_filter(FilterMode::Nearest);
+        player4.set_filter(FilterMode::Nearest);
+        player5.set_filter(FilterMode::Nearest);
+        player6.set_filter(FilterMode::Nearest);
+        player7.set_filter(FilterMode::Nearest);
+        player8.set_filter(FilterMode::Nearest);
+        player9.set_filter(FilterMode::Nearest);
+        player0.set_filter(FilterMode::Nearest);
+        zombie.set_filter(FilterMode::Nearest);
+        zombie2.set_filter(FilterMode::Nearest);
+        zombie3.set_filter(FilterMode::Nearest);
+        zombie4.set_filter(FilterMode::Nearest);
+        zombie5.set_filter(FilterMode::Nearest);
+        zombie6.set_filter(FilterMode::Nearest);
+        zombie7.set_filter(FilterMode::Nearest);
+        zombie8.set_filter(FilterMode::Nearest);
+        zombie9.set_filter(FilterMode::Nearest);
+        zombie0.set_filter(FilterMode::Nearest);
+        skeleton.set_filter(FilterMode::Nearest);
+        skeleton2.set_filter(FilterMode::Nearest);
+        skeleton3.set_filter(FilterMode::Nearest);
+        skeleton4.set_filter(FilterMode::Nearest);
+        skeleton5.set_filter(FilterMode::Nearest);
+        skeleton6.set_filter(FilterMode::Nearest);
+        skeleton7.set_filter(FilterMode::Nearest);
+        skeleton8.set_filter(FilterMode::Nearest);
+        skeleton9.set_filter(FilterMode::Nearest);
+        skeleton0.set_filter(FilterMode::Nearest);
+        ground.set_filter(FilterMode::Nearest);
+        grass.set_filter(FilterMode::Nearest);
+        moss.set_filter(FilterMode::Nearest);
 
         Ok (
             Assets {
@@ -214,12 +247,14 @@ impl Assets {
 /// Create an enumeration of all the different entity types.
 /// *********************************************************************
 
+#[derive(Clone)]
 pub enum EntityType {
     Player,
     Zombie,
     Skeleton,
 }
 
+#[derive(Clone)]
 pub enum Direction {
     Left,
     Right,
@@ -229,6 +264,7 @@ pub enum Direction {
 /// Create an enumeration of all entity animation frames.
 /// *********************************************************************
 
+#[derive(Clone)]
 pub enum Frame {
     Stand,
     Walk1,
@@ -241,6 +277,7 @@ pub enum Frame {
 /// Define a struct containing the properties of an entity.
 /// *********************************************************************
 
+#[derive(Clone)]
 pub struct Entity {
     pub tag: EntityType,
     pub pos: (i16, i16),
@@ -443,6 +480,17 @@ pub fn update_monsters(monster_list: &mut Vec<Entity>) {
             monster.falling = false;
             monster.pos = (monster.pos.0, GROUND as i16);
         }
+    }
+}
+
+/// *********************************************************************
+/// Detect entity collisions.
+/// *********************************************************************
+pub fn is_touching(entity1: &Entity, entity2: &Entity) -> bool {
+    if (entity1.pos.0 - entity2.pos.0).abs() <= 16 && (entity1.pos.1 - entity2.pos.1).abs() <= 16 {
+        return true;
+    } else {
+        return false;
     }
 }
 

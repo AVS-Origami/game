@@ -5,6 +5,7 @@
 use std::env;
 use std::path;
 use ggez::conf;
+use ggez::mint::Vector2;
 use ggez::timer;
 
 use ggez::{Context, ContextBuilder, GameResult, GameError};
@@ -19,7 +20,9 @@ use oorandom::Rand32;
 /// *********************************************************************
 
 mod entity;
+mod settings;
 use entity::*;
+use settings::*;
 
 struct MainState {
     player: Entity,
@@ -29,10 +32,11 @@ struct MainState {
     ticks: f32,
     assets: Assets,
     input: InputState,
+    scale: f32,
 }
 
 impl MainState {
-    pub fn new(ctx: &mut Context) -> GameResult<MainState> {
+    pub fn new(ctx: &mut Context, scale: f32) -> GameResult<MainState> {
         // Load/create resources such as images here.
         let player = Entity {
                 tag: EntityType::Player,
@@ -66,6 +70,7 @@ impl MainState {
             spawn_cycle,
             ticks: 0.0,
             input: InputState::default(),
+            scale,
         };
 
         Ok(s)
@@ -80,8 +85,10 @@ impl EventHandler<GameError> for MainState {
             if self.player.falling {
                 self.player.jump += PLAYER_JUMP_TIME;
             }
-
-            handle_player_input(&mut self.player, &self.input);
+            
+            if self.player.health > 0 {
+                handle_player_input(&mut self.player, &self.input);
+            }
         }
 
         self.ticks += 1.0;
@@ -92,6 +99,23 @@ impl EventHandler<GameError> for MainState {
         }
 
         update_monsters(&mut self.monsters);
+
+        let mut alive_monsters = Vec::new();
+
+        for monster in self.monsters.clone() {
+            if is_touching(&self.player, &monster) {
+                if ! self.player.falling {
+                    alive_monsters.push(monster);
+                    if self.player.health > 0 {
+                        self.player.health -= 1;
+                    }
+                }
+            } else {
+                alive_monsters.push(monster);
+            }
+        }
+
+        self.monsters = alive_monsters;
 
         Ok(())
     }
@@ -106,7 +130,7 @@ impl EventHandler<GameError> for MainState {
         draw_monsters(&mut self.monsters, &mut self.assets, ctx)?;
 
         // Draw the ground
-        draw_ground(&mut self.assets, ctx)?;
+        draw_ground(&mut self.assets, ctx, self.scale)?;
 
         // Draw code here...
 
@@ -169,6 +193,7 @@ impl EventHandler<GameError> for MainState {
 }
 
 fn main() -> GameResult {
+    let scale = fetch_setting("scale");
     // Add CARGO_MANIFEST_DIR/resources to resource paths
     let resource_dir = if let Ok(manifest_dir) = env::var("CARGO_MANIFEST_DIR") {
         let mut path = path::PathBuf::from(manifest_dir);
@@ -181,7 +206,7 @@ fn main() -> GameResult {
     // Make a Context.
     let (mut ctx, event_loop) = ContextBuilder::new("game", "AVS Origami")
         .window_setup(conf::WindowSetup::default().title("game"))
-        .window_mode(conf::WindowMode::default().dimensions(SCREEN_WIDTH, SCREEN_HEIGHT))
+        .window_mode(conf::WindowMode::default().dimensions(SCREEN_WIDTH * scale, SCREEN_HEIGHT * scale))
         .add_resource_path(resource_dir)
         .build()
         .expect("aieee, could not create ggez context!");
@@ -189,19 +214,19 @@ fn main() -> GameResult {
     // Create an instance of your event handler.
     // Usually, you should provide it with the Context object to
     // use when setting your game up.
-    let game = MainState::new(&mut ctx)?;
+    let game = MainState::new(&mut ctx, scale)?;
 
     // Run!
     event::run(ctx, event_loop, game)
 }
 
-fn draw_ground(assets: &mut Assets, ctx: &mut Context) -> GameResult {
+fn draw_ground(assets: &mut Assets, ctx: &mut Context, scale: f32) -> GameResult {
     let mut pos = Point2 {x: 0.0, y: GROUND + 16.0};
     let image = &mut assets.moss;
 
     Ok (
-        for _ in 0..(SCREEN_WIDTH / 8.0) as i32 {
-            let drawparams = graphics::DrawParam::new().dest(pos);
+        for _ in 0..(SCREEN_WIDTH * scale / 8.0) as i32 {
+            let drawparams = graphics::DrawParam::new().dest(pos).scale(Vector2{x: scale, y: scale});
             graphics::draw(ctx, image, drawparams)?;
             pos.x += 8.0;
         }
