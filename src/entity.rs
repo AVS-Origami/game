@@ -3,7 +3,7 @@
 /// *********************************************************************
 use ggez::graphics::{self, FilterMode};
 
-use ggez::mint::Point2;
+use ggez::mint::{Point2, Vector2};
 use ggez::{Context, GameResult};
 
 use oorandom::Rand32;
@@ -294,11 +294,11 @@ pub struct Entity {
 /// Create a function to draw entities.
 /// *********************************************************************
 
-pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coords: (i16, i16)) -> GameResult {
+pub fn draw_entity(assets: &mut Assets, ctx: &mut Context, entity: &Entity, coords: (i16, i16), scale: f32) -> GameResult {
     let pos = pos_to_p2(coords);
 
     let image = assets.image(entity);
-    let drawparams = graphics::DrawParam::new().dest(pos);
+    let drawparams = graphics::DrawParam::new().dest(pos).scale(Vector2{x: scale, y: scale});
 
     graphics::draw(ctx, image, drawparams)
 }
@@ -321,14 +321,14 @@ fn advance_animation(entity: &mut Entity) {
 /// properties accordingly.
 /// *********************************************************************
 
-pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
-    entity.pos.0 += (PLAYER_MOVE_RATE * input.x) as i16;
+pub fn handle_player_input(entity: &mut Entity, input: &InputState, scale: f32) {
+    entity.pos.0 += (PLAYER_MOVE_RATE * input.x * scale) as i16;
 
     // Make sure the player can't go off the edge of the screen
     if entity.pos.0 < 0 {
         entity.pos = (0, entity.pos.1);
-    } else if entity.pos.0 > SCREEN_WIDTH as i16 - 16 {
-        entity.pos = (SCREEN_WIDTH as i16 - 16, entity.pos.1);
+    } else if entity.pos.0 > (SCREEN_WIDTH * scale) as i16 - 16 * scale as i16 {
+        entity.pos = ((SCREEN_WIDTH * scale) as i16 - 16 * scale as i16, entity.pos.1);
     }
 
     if input.x != 0.0 {
@@ -339,32 +339,32 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState) {
 
     if input.jump {
         entity.falling = true;
-        entity.pos = (entity.pos.0, ((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) as i16);
+        entity.pos = (entity.pos.0, (((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) * scale) as i16);
 
-        if entity.pos.1 > GROUND as i16 {
+        if entity.pos.1 >= (GROUND * scale) as i16 {
 
-            entity.pos = (entity.pos.0, GROUND as i16);
+            entity.pos = (entity.pos.0, (GROUND * scale) as i16);
             entity.jump = 0.0;
 
         }
 
     } else if ! input.jump {
 
-        if entity.pos.1 >= GROUND as i16 {
+        if entity.pos.1 >= (GROUND * scale) as i16 {
 
                 entity.falling = false;
                 entity.jump = 0.0;
-                entity.pos = (entity.pos.0, GROUND as i16);
+                entity.pos = (entity.pos.0, (GROUND * scale) as i16);
 
-        } else if entity.pos.1 < GROUND as i16 {
+        } else if entity.pos.1 < (GROUND * scale) as i16 {
 
-            entity.pos = (entity.pos.0, ((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) as i16);
+            entity.pos = (entity.pos.0, (((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + GROUND) * scale) as i16);
 
-            if entity.pos.1 >= GROUND as i16 {
+            if entity.pos.1 >= (GROUND * scale) as i16 {
 
                 entity.falling = false;
                 entity.jump = 0.0;
-                entity.pos = (entity.pos.0, GROUND as i16);
+                entity.pos = (entity.pos.0, (GROUND * scale) as i16);
 
             }
 
@@ -437,10 +437,10 @@ pub fn spawn_monsters(rng: &mut Rand32, monster_list: &mut Vec<Entity>) {
 /// *********************************************************************
 /// Create a function to draw monsters.
 /// *********************************************************************
-pub fn draw_monsters(monster_list: &mut Vec<Entity>, assets: &mut Assets, ctx: &mut Context) -> GameResult {
+pub fn draw_monsters(monster_list: &mut Vec<Entity>, assets: &mut Assets, ctx: &mut Context, scale: f32) -> GameResult {
     Ok (
         for monster in monster_list {
-            draw_entity(assets, ctx, monster, monster.pos)?;
+            draw_entity(assets, ctx, monster, monster.pos, scale)?;
         }
     )
 }
@@ -448,37 +448,37 @@ pub fn draw_monsters(monster_list: &mut Vec<Entity>, assets: &mut Assets, ctx: &
 /// *********************************************************************
 /// Create a function to update monsters.
 /// *********************************************************************
-pub fn update_monsters(monster_list: &mut Vec<Entity>) {
+pub fn update_monsters(monster_list: &mut Vec<Entity>, scale: f32) {
     for monster in monster_list {
         if ! monster.falling {
             monster.ticks += 1;
         }
         if monster.ticks == MONSTER_MOVE_RATE && ! monster.falling {
             let direction = match monster.facing {
-                Direction::Left => -1,
-                Direction::Right => 1,
+                Direction::Left => -1 * scale as i16,
+                Direction::Right => 1 * scale as i16,
             };
 
             monster.pos = (monster.pos.0 + direction, monster.pos.1);
             if monster.pos.0 < 0 {
                 monster.facing = Direction::Right;
                 monster.pos = (0, monster.pos.1);
-            } else if monster.pos.0 > (SCREEN_WIDTH - 16.0) as i16 {
+            } else if monster.pos.0 > ((SCREEN_WIDTH - 16.0) * scale) as i16 {
                 monster.facing = Direction::Left;
-                monster.pos = ((SCREEN_WIDTH - 16.0) as i16, monster.pos.1);
+                monster.pos = (((SCREEN_WIDTH - 16.0) * scale) as i16, monster.pos.1);
             }
             advance_animation(monster);
             monster.ticks = 0;
         }
 
         if monster.falling {
-            monster.pos = (monster.pos.0, ((1.09 * monster.jump.powf(2.0)) - 8.0) as i16);
+            monster.pos = (monster.pos.0, (((1.09 * monster.jump.powf(2.0)) - 8.0) * scale) as i16);
             monster.jump += 1.0;
         }
 
-        if monster.pos.1 >= GROUND as i16 {
+        if monster.pos.1 >= (GROUND * scale) as i16 {
             monster.falling = false;
-            monster.pos = (monster.pos.0, GROUND as i16);
+            monster.pos = (monster.pos.0, (GROUND * scale) as i16);
         }
     }
 }
@@ -486,8 +486,8 @@ pub fn update_monsters(monster_list: &mut Vec<Entity>) {
 /// *********************************************************************
 /// Detect entity collisions.
 /// *********************************************************************
-pub fn is_touching(entity1: &Entity, entity2: &Entity) -> bool {
-    if (entity1.pos.0 - entity2.pos.0).abs() <= 16 && (entity1.pos.1 - entity2.pos.1).abs() <= 16 {
+pub fn is_touching(entity1: &Entity, entity2: &Entity, scale: f32) -> bool {
+    if (entity1.pos.0 - entity2.pos.0).abs() <= 16 * scale as i16 && (entity1.pos.1 - entity2.pos.1).abs() <= 16 * scale as i16 {
         return true;
     } else {
         return false;

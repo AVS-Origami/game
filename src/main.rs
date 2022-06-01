@@ -87,7 +87,7 @@ impl EventHandler<GameError> for MainState {
             }
             
             if self.player.health > 0 {
-                handle_player_input(&mut self.player, &self.input);
+                handle_player_input(&mut self.player, &self.input, self.scale);
             }
         }
 
@@ -98,12 +98,12 @@ impl EventHandler<GameError> for MainState {
             self.ticks = 0.0;
         }
 
-        update_monsters(&mut self.monsters);
+        update_monsters(&mut self.monsters, self.scale);
 
         let mut alive_monsters = Vec::new();
 
         for monster in self.monsters.clone() {
-            if is_touching(&self.player, &monster) {
+            if is_touching(&self.player, &monster, self.scale) {
                 if ! self.player.falling {
                     alive_monsters.push(monster);
                     if self.player.health > 0 {
@@ -124,10 +124,10 @@ impl EventHandler<GameError> for MainState {
         graphics::clear(ctx, Color::WHITE);
 
         // Draw the player
-        draw_entity(&mut self.assets, ctx, &self.player, self.player.pos)?;
+        draw_entity(&mut self.assets, ctx, &self.player, self.player.pos, self.scale)?;
 
         // Draw the monsters
-        draw_monsters(&mut self.monsters, &mut self.assets, ctx)?;
+        draw_monsters(&mut self.monsters, &mut self.assets, ctx, self.scale)?;
 
         // Draw the ground
         draw_ground(&mut self.assets, ctx, self.scale)?;
@@ -221,7 +221,7 @@ fn main() -> GameResult {
 }
 
 fn draw_ground(assets: &mut Assets, ctx: &mut Context, scale: f32) -> GameResult {
-    let mut pos = Point2 {x: 0.0, y: GROUND + 16.0};
+    let mut pos = Point2 {x: 0.0, y: GROUND * scale + 16.0 * scale};
     let image = &mut assets.moss;
 
     Ok (
