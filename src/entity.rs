@@ -55,6 +55,7 @@ pub struct Assets {
     pub ground: graphics::Image,
     pub grass: graphics::Image,
     pub moss: graphics::Image,
+    pub font: graphics::Font,
 }
 
 impl Assets {
@@ -92,6 +93,7 @@ impl Assets {
         let mut ground = graphics::Image::new(ctx, "/ground.png")?;
         let mut grass = graphics::Image::new(ctx, "/grass.png")?;
         let mut moss = graphics::Image::new(ctx, "/moss.png")?;
+        let font = graphics::Font::new(ctx, "/MorePerfectDOSVGA.ttf")?;
 
         player.set_filter(FilterMode::Nearest);
         player2.set_filter(FilterMode::Nearest);
@@ -162,6 +164,7 @@ impl Assets {
                 ground,
                 grass,
                 moss,
+                font,
             }
         )
     }

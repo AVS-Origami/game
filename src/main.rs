@@ -33,6 +33,7 @@ struct MainState {
     assets: Assets,
     input: InputState,
     scale: f32,
+    score: usize,
 }
 
 impl MainState {
@@ -71,6 +72,7 @@ impl MainState {
             ticks: 0.0,
             input: InputState::default(),
             scale,
+            score: 0,
         };
 
         Ok(s)
@@ -109,6 +111,8 @@ impl EventHandler<GameError> for MainState {
                     if self.player.health > 0 {
                         self.player.health -= 1;
                     }
+                } else if self.player.falling {
+                    self.score += 1;
                 }
             } else {
                 alive_monsters.push(monster);
@@ -133,6 +137,19 @@ impl EventHandler<GameError> for MainState {
         draw_ground(&mut self.assets, ctx, self.scale)?;
 
         // Draw code here...
+        let score_str = format!("{}", self.score);
+        let score_len = score_str.chars().count() as f32 / 2.0;
+        let score_dest = Point2 {x: (SCREEN_WIDTH * self.scale) / 2.0 - score_len * 8.0 * self.scale, y: 0.0};
+        let score_display = graphics::Text::new((score_str, self.assets.font, 16.0 * self.scale));
+        graphics::draw(ctx, &score_display, (score_dest, 0.0, Color::from_rgb(120, 147, 65)))?;
+
+        if self.player.health == 0 {
+            let game_over_str = "game over";
+            let game_over_len = game_over_str.chars().count() as f32 / 2.0;
+            let game_over_dest = Point2 {x: (SCREEN_WIDTH * self.scale) / 2.0 - game_over_len * 16.0 * self.scale, y: (SCREEN_HEIGHT * self.scale) / 2.0 - 32.0 * self.scale};
+            let game_over_display = graphics::Text::new((game_over_str, self.assets.font, 32.0 * self.scale));
+            graphics::draw(ctx, &game_over_display, (game_over_dest, 0.0, Color::from_rgb(90, 117, 35)))?;
+        }
 
         graphics::present(ctx)?;
 
