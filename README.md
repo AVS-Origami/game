@@ -7,9 +7,10 @@
 |   left/right arrows: move            |
 |   z: jump                            |
 |   shift: run                         |
-| Settings: edit settings.cfg          |
 |======================================|
 | Objective: stomp on as many monsters |
 | as you can!                          |
+|======================================|
+| Size window by editing settings.cfg  |
 |======================================|
 ```
