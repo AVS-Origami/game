@@ -101,7 +101,7 @@ fn advance_animation(entity: &mut Entity) {
 /// properties accordingly.
 /// *********************************************************************
 
-pub fn handle_player_input(entity: &mut Entity, input: &InputState, scale: f32) {
+pub fn handle_player_input(entity: &mut Entity, input: &mut InputState, scale: f32) {
     entity.pos.0 += (PLAYER_MOVE_RATE * input.x * scale) as i16;
 
     // Make sure the player can't go off the edge of the screen
@@ -117,14 +117,18 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState, scale: f32) 
         entity.frame = Frame::Stand;
     }
 
-    if input.jump {
+    if input.jump &&! input.jump_spam {
         entity.falling = true;
+        if entity.jump_from == GROUND as i16 {
+            entity.jump_from = GROUND as i16 - 1;
+        }
         entity.pos = (entity.pos.0, (((4.9 * entity.jump.powf(2.0)) - (PLAYER_JUMP_VELOCITY * entity.jump) + entity.jump_from as f32 / scale) * scale) as i16);
 
         if entity.pos.1 >= (GROUND * scale) as i16 {
 
             entity.pos = (entity.pos.0, (GROUND * scale) as i16);
             entity.jump = 0.0;
+            input.jump_spam = true;
 
         }
 
@@ -149,6 +153,12 @@ pub fn handle_player_input(entity: &mut Entity, input: &InputState, scale: f32) 
             }
 
         }
+
+        input.jump_spam = false;
+    }
+
+    if input.jump_spam {
+        entity.falling = false;
     }
 
     if entity.falling {
@@ -164,6 +174,7 @@ pub struct InputState {
     pub x: f32,
     pub jump: bool,
     pub attack: bool,
+    pub jump_spam: bool,
 }
 
 impl Default for InputState {
@@ -172,6 +183,7 @@ impl Default for InputState {
             x: 0.0,
             jump: false,
             attack: false,
+            jump_spam: false,
         }
     }
 }

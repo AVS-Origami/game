@@ -105,7 +105,7 @@ impl EventHandler<GameError> for MainState {
             }
             
             if self.player.health > 0 {
-                handle_player_input(&mut self.player, &self.input, self.scale);
+                handle_player_input(&mut self.player, &mut self.input, self.scale);
             }
         }
 
