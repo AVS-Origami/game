@@ -72,7 +72,7 @@ impl MainState {
 
         let spawn_cycle = rng.rand_range(4..9) as f32;
 
-        let play = Button {pos: (144 * scale as i16, 104 * scale as i16), scale};
+        let play = Button {pos: (144 * scale as i16, 104 * scale as i16), width: 32, scale, hover: false};
 
         let gui = Gui {play};
 
@@ -104,21 +104,25 @@ impl EventHandler<GameError> for MainState {
                 self.player.jump += PLAYER_JUMP_TIME;
             }
             
-            if self.player.health > 0 {
+            if self.screen == Screen::Game {
                 handle_player_input(&mut self.player, &mut self.input, self.scale);
             }
         }
 
-        self.ticks += 1.0;
-        if (self.ticks / 60.0) == self.spawn_cycle && (self.screen == Screen::Game || self.screen == Screen::Death) {
-            if self.score % 5 == 0 {
-                self.difficulty += 1;
-            }
+        if self.screen == Screen::Game || self.screen == Screen::Death {
 
-            let difficulty = self.rng.rand_range(2 + self.difficulty..5 + self.difficulty);
-            spawn_monsters(&mut self.rng, &mut self.monsters, difficulty);
-            self.spawn_cycle = self.rng.rand_range(4..9) as f32;
-            self.ticks = 0.0;
+            self.ticks += 1.0;
+
+            if (self.ticks / 60.0) == self.spawn_cycle {
+                if self.score % 5 == 0 {
+                    self.difficulty += 1;
+                }
+
+                let difficulty = self.rng.rand_range(2 + self.difficulty..5 + self.difficulty);
+                spawn_monsters(&mut self.rng, &mut self.monsters, difficulty);
+                self.spawn_cycle = self.rng.rand_range(4..9) as f32;
+                self.ticks = 0.0;
+            }
         }
 
         update_monsters(&mut self.monsters, self.scale);
@@ -177,7 +181,7 @@ impl EventHandler<GameError> for MainState {
         }
 
         if self.screen == Screen::Title || self.screen == Screen::Death {
-            draw_button(ctx, &mut self.gui.play, &mut self.assets.play)?;
+            Button::draw(ctx, &mut self.gui.play, &mut self.assets.play)?;
         }
 
         graphics::present(ctx)?;
@@ -238,14 +242,15 @@ impl EventHandler<GameError> for MainState {
         }
     }
 
-    fn mouse_button_down_event(&mut self, _ctx: &mut Context, _button: event::MouseButton, x: f32, y: f32) {
+    fn mouse_button_down_event(&mut self, _ctx: &mut Context, _button: event::MouseButton, _x: f32, _y: f32) {
         if self.screen == Screen::Title || self.screen == Screen::Death {
-            if x >= 144.0 * self.scale && x <= 176.0 * self.scale && y >= 104.0 * self.scale && y <= 136.0 * self.scale {
+            if self.gui.play.hover {
                 self.screen = Screen::Game;
                 self.monsters.clear();
                 self.player.health = 4;
                 self.score = 0;
                 self.difficulty = 0;
+                self.ticks = 0.0;
             }
         }
     }
@@ -253,11 +258,7 @@ impl EventHandler<GameError> for MainState {
     fn mouse_button_up_event(&mut self, _ctx: &mut Context, _button: event::MouseButton, _x: f32, _y: f32) {}
 
     fn mouse_motion_event(&mut self, _ctx: &mut Context, x: f32, y: f32, _dx: f32, _dy: f32) {
-        if x >= 144.0 * self.scale && x <= 176.0 * self.scale && y >= 104.0 * self.scale && y <= 136.0 * self.scale {
-            self.gui.play.pos = (self.gui.play.pos.0, (100.0 * self.scale) as i16);
-        } else {
-            self.gui.play.pos = (self.gui.play.pos.0, (104.0 * self.scale) as i16);
-        }
+        Button::hover(&mut self.gui.play, x, y, self.scale);
     }
 }
 
